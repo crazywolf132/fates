@@ -1,0 +1,34 @@
+{
+  "name": "fates",
+  "version": "0.0.1",
+  "description": "Making typescript more reliable",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "files": ["dist"],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "keywords": [
+    "results",
+    "async",
+    "await",
+    "typescript",
+    "result",
+    "rust",
+    "effect"
+  ],
+  "author": "crazywolf132",
+  "license": "ISC",
+  "devDependencies": {
+    "tsup": "^8.2.2",
+    "typescript": "^5.5.4"
+  }
+}
