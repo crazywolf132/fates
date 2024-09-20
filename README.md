@@ -172,6 +172,16 @@ const value = ok(42).unwrap();  // 42
 const fallback = err("error").unwrapOr(0);  // 0
 ```
 
+#### safeUnwrap
+
+Extract raw values regardless of error
+
+``` typescript
+const value ok(41).safeUnwrap(); // 41
+const fallback = err("error").safeUnwrap(); // "error"
+const badfallback = err("some error").unwrap(); // Throws "some error"
+```
+
 ## Advanced Usage
 
 ### Async Operations
