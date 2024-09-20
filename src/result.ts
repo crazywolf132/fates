@@ -40,6 +40,10 @@ export class Ok<T> {
         return this.value;
     }
 
+    safeUnwrap(): T {
+        return this.value;
+    }
+
     toPromise(): Promise<T> {
         return Promise.resolve(this.value);
     }
@@ -85,6 +89,10 @@ export class Err<E> {
 
     unwrap(): never {
         throw this.error;
+    }
+
+    safeUnwrap(): E {
+        return this.error;
     }
 
     toPromise(): Promise<never> {
