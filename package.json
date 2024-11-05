@@ -1,6 +1,6 @@
 {
   "name": "fates",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Making typescript more reliable",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,40 +16,48 @@
   "exports": {
     ".": {
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
     },
     "./assert": {
       "import": "./dist/assert/index.js",
-      "require": "./dist/assert/index.cjs"
+      "require": "./dist/assert/index.cjs",
+      "types": "./dist/assert/index.d.ts"
     },
     "./cache": {
       "import": "./dist/cache/index.js",
-      "require": "./dist/cache/index.cjs"
+      "require": "./dist/cache/index.cjs",
+      "types": "./dist/cache/index.d.ts"
     },
     "./error": {
       "import": "./dist/error/index.js",
-      "require": "./dist/error/index.cjs"
+      "require": "./dist/error/index.cjs",
+      "types": "./dist/error/index.d.ts"
     },
     "./events": {
       "import": "./dist/events/index.js",
-      "require": "./dist/events/index.cjs"
+      "require": "./dist/events/index.cjs",
+      "types": "./dist/events/index.d.ts"
     },
     "./fetch": {
       "import": "./dist/fetch/index.js",
-      "require": "./dist/fetch/index.cjs"
+      "require": "./dist/fetch/index.cjs",
+      "types": "./dist/fetch/index.d.ts"
     },
     "./fs": {
       "import": "./dist/fs/index.js",
-      "require": "./dist/fs/index.cjs"
+      "require": "./dist/fs/index.cjs",
+      "types": "./dist/fs/index.d.ts"
     },
     "./path": {
       "import": "./dist/path/index.js",
-      "require": "./dist/path/index.cjs"
+      "require": "./dist/path/index.cjs",
+      "types": "./dist/path/index.d.ts"
     },
     "./rate-limiter": {
       "import": "./dist/rate-limiter/index.js",
       "require": "./dist/rate-limiter/index.cjs",
-      "types": "./dist/rate-limiter/index.dts"
+      "types": "./dist/rate-limiter/index.d.ts"
     },
     "./react": {
       "import": "./dist/react/index.js",
