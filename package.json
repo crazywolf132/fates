@@ -1,9 +1,9 @@
 {
   "name": "fates",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Making typescript more reliable",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "type": "module",
   "repository": {
     "type": "git",
@@ -17,6 +17,44 @@
     ".": {
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./assert": {
+      "import": "./dist/assert/index.js",
+      "require": "./dist/assert/index.cjs"
+    },
+    "./cache": {
+      "import": "./dist/cache/index.js",
+      "require": "./dist/cache/index.cjs"
+    },
+    "./error": {
+      "import": "./dist/error/index.js",
+      "require": "./dist/error/index.cjs"
+    },
+    "./events": {
+      "import": "./dist/events/index.js",
+      "require": "./dist/events/index.cjs"
+    },
+    "./fetch": {
+      "import": "./dist/fetch/index.js",
+      "require": "./dist/fetch/index.cjs"
+    },
+    "./fs": {
+      "import": "./dist/fs/index.js",
+      "require": "./dist/fs/index.cjs"
+    },
+    "./path": {
+      "import": "./dist/path/index.js",
+      "require": "./dist/path/index.cjs"
+    },
+    "./rate-limiter": {
+      "import": "./dist/rate-limiter/index.js",
+      "require": "./dist/rate-limiter/index.cjs",
+      "types": "./dist/rate-limiter/index.dts"
+    },
+    "./react": {
+      "import": "./dist/react/index.js",
+      "require": "./dist/react/index.cjs",
+      "types": "./dist/react/index.d.ts"
     }
   },
   "scripts": {
@@ -34,8 +72,14 @@
   ],
   "author": "crazywolf132",
   "license": "ISC",
+  "peerDependencies": {
+    "react": "^18.2.0"
+  },
   "devDependencies": {
-    "tsup": "^8.2.2",
-    "typescript": "^5.5.4"
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "fast-glob": "^3.3.2",
+    "tsup": "^8.3.5",
+    "typescript": "^5.6.3"
   }
 }

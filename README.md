@@ -1,4 +1,4 @@
-# Fates 🔮 - Tame Your TypeScript Destiny!
+# Fates 🔮 - Tame Your TypeScript Destiny
 
 Hey there, fellow coder! 👋 Tired of wrestling with unpredictable outcomes in your TypeScript projects? Say hello to Fates, your new best friend in the battle against uncertainty!
 
@@ -7,48 +7,31 @@ Hey there, fellow coder! 👋 Tired of wrestling with unpredictable outcomes in 
 
 ## Table of Contents
 
-- [Introduction](#introduction)
-- [Key Features](#key-features)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Core Concepts](#core-concepts)
-  - [The Result Type](#the-result-type)
-  - [Ok and Err](#ok-and-err)
-  - [Essential Methods](#essential-methods)
-- [Advanced Usage](#advanced-usage)
-  - [Async Operations](#async-operations)
-  - [Chaining and Composition](#chaining-and-composition)
-  - [Error Recovery and Transformation](#error-recovery-and-transformation)
-  - [Validation Pipelines](#validation-pipelines)
-  - [Parsing and Type Conversion](#parsing-and-type-conversion)
-  - [Combining Results](#combining-results)
-  - [Processing Pipelines](#processing-pipelines)
-  - [Retry Mechanisms](#retry-mechanisms)
-- [API Reference](#api-reference)
-- [Best Practices and Patterns](#best-practices-and-patterns)
-- [Performance Considerations](#performance-considerations)
-- [Migrating from Try-Catch](#migrating-from-try-catch)
-- [Comparison with Other Libraries](#comparison-with-other-libraries)
-- [Contributing](#contributing)
-- [License](#license)
-
-## Introduction
-
-Fates is a powerful TypeScript library that revolutionizes error handling and data flow management. By introducing a `Result` type inspired by functional programming paradigms, Fates enables developers to write more predictable, maintainable, and expressive code.
-
-## Key Features
-
-- 🛡️ **Type-Safe Error Handling**: Leverage TypeScript's type system for robust error management.
-- 🔗 **Elegant Function Composition**: Chain operations seamlessly, even with potential failures.
-- 🚀 **First-Class Async Support**: Handle asynchronous operations with grace and predictability.
-- 🧰 **Comprehensive Utility Set**: A rich collection of tools for manipulating and transforming Results.
-- 🏗️ **Flexible Validation Framework**: Construct complex, reusable validation pipelines with ease.
-- 🔄 **Built-in Retry Mechanism**: Handle transient failures in distributed systems effortlessly.
-- 🧩 **Powerful Combinators**: Combine and manipulate multiple Results with intuitive operators.
+1. [Installation](#installation)
+2. [Getting Started](#getting-started)
+   - [Basic Usage](#basic-usage)
+   - [Working with Results](#working-with-results)
+   - [Handling Edge Cases](#handling-edge-cases)
+3. [Core Concepts](#core-concepts)
+   - [Result Type](#result-type)
+   - [Option Type](#option-type)
+   - [Either Type](#either-type)
+4. [Available Crates](#available-crates)
+5. [Advanced Usage](#advanced-usage)
+   - [Async Operations](#async-operations)
+   - [Chaining and Composition](#chaining-and-composition)
+   - [Error Recovery](#error-recovery)
+   - [Validation Pipelines](#validation-pipelines)
+   - [Data Processing](#data-processing)
+   - [Retry Mechanisms](#retry-mechanisms)
+   - [Combining Results](#combining-results)
+6. [Best Practices](#best-practices)
+7. [Performance Considerations](#performance-considerations)
+8. [Migration Guide](#migration-guide)
+9. [Library Comparison](#library-comparison)
+10. [API Reference](#api-reference)
 
 ## Installation
-
-Choose your preferred package manager:
 
 ```bash
 npm install fates
@@ -58,341 +41,445 @@ yarn add fates
 pnpm add fates
 ```
 
-## Quick Start
+## Getting Started
 
-Let's dive into a simple example to see Fates in action:
+### Basic Usage
+
+Fates makes error handling intuitive and type-safe:
 
 ```typescript
-import { ok, err, Result } from 'fates';
+import { ok, err, type Result } from 'fates';
 
-function divideAndFormatCurrency(a: number, b: number): Result<string, string> {
-  if (b === 0) return err("Division by zero");
-  const result = a / b;
-  return ok(`$${result.toFixed(2)}`);
+// Results use Error as the default error type
+function divide(a: number, b: number): Result<number> {
+  if (b === 0) return err(new Error("Division by zero"));
+  return ok(a / b);
 }
 
-const result = divideAndFormatCurrency(100, 3);
-
-result.match({
-  ok: (value) => console.log(`Formatted result: ${value}`),
-  err: (error) => console.log(`Error occurred: ${error}`),
+// Pattern matching for clean error handling
+divide(10, 2).match({
+  ok: result => console.log(`Result: ${result}`),
+  err: error => console.log(`Error: ${error.message}`)
 });
-// Output: Formatted result: $33.33
+```
+
+### Working with Results
+
+Chain operations safely and handle errors gracefully:
+
+```typescript
+const result = divide(10, 2)
+  .map(value => value * 2)
+  .flatMap(value => validateNumber(value))
+  .mapErr(error => new ValidationError(error.message));
+
+// Provide fallback values
+const safeResult = result.unwrapOr(0);
+
+// Transform errors
+const handled = result.mapErr(error => {
+  logError(error);
+  return new UserFacingError("Calculation failed");
+});
+```
+
+### Handling Edge Cases
+
+Working with boolean Results requires special attention:
+
+```typescript
+function checkUserAccess(userId: string): Result<boolean> {
+  try {
+    const hasAccess = /* check access */;
+    return ok(hasAccess);
+  } catch (error) {
+    return err(error instanceof Error ? error : new Error(String(error)));
+  }
+}
+
+// ✅ Correct usage with pattern matching
+const accessResult = checkUserAccess("user-123");
+accessResult.match({
+  ok: hasAccess => hasAccess ? grantAccess() : denyAccess(),
+  err: error => handleError(error)
+});
+
+// ✅ Alternative using map
+const accessStatus = await checkUserAccess("user-123")
+  .map(hasAccess => hasAccess ? "granted" : "denied")
+  .unwrapOr("error");
 ```
 
 ## Core Concepts
 
-### The Result Type
+### Result Type
 
-The foundation of Fates is the `Result` type:
-
-```typescript
-type Result<T, E = Error> = Ok<T> | Err<E>;
-```
-
-It encapsulates either a success value (`Ok<T>`) or a failure value (`Err<E>`).
-
-### The Option Type
-
-Fates also provides an `Option` type for representing values that may or may not exist:
+`Result<T, E = Error>` represents an operation that can fail:
 
 ```typescript
-type Option<T> = Ok<T> | Err<null>;
-```
-
-The `Option` type is useful for handling nullable values without resorting to null checks:
-
-```typescript
-import { fromNullable, Option } from 'fates';
-
-function findUser(id: number): Option<User> {
-  const user = database.getUser(id);
-  return fromNullable(user);
+// Error type defaults to Error if not specified
+function findUser(id: string): Result<User> {
+  try {
+    const user = db.find(id);
+    return user ? ok(user) : err(new Error("User not found"));
+  } catch (error) {
+    return err(error instanceof Error ? error : new Error(String(error)));
+  }
 }
 
-const userOption = findUser(1);
-userOption.match({
-  ok: (user) => console.log(`Found user: ${user.name}`),
-  err: () => console.log("User not found"),
+// Custom error type
+function validateAge(age: number): Result<number, ValidationError> {
+  return age >= 0 ? ok(age) : err(new ValidationError("Age must be positive"));
+}
+```
+
+### Option Type
+
+`Option<T>` handles nullable values elegantly:
+
+```typescript
+import { some, none, type Option } from 'fates';
+
+function findFirst<T>(arr: T[], predicate: (value: T) => boolean): Option<T> {
+  const value = arr.find(predicate);
+  return value ? some(value) : none();
+}
+
+// Chain operations safely
+const result = findFirst([1, 2, 3], x => x > 2)
+  .map(x => x * 2)
+  .filter(x => x < 10)
+  .unwrapOr(0);
+```
+
+### Either Type
+
+`Either<L, R>` represents values with two possible types:
+
+```typescript
+import { left, right, type Either } from 'fates';
+
+type ValidationErrors = string[];
+type ConfigData = { port: number; host: string };
+
+function parseConfig(input: string): Either<ValidationErrors, ConfigData> {
+  const errors = validateConfig(input);
+  return errors.length > 0 
+    ? left(errors)
+    : right(parseValidConfig(input));
+}
+
+// Usage with pattern matching
+parseConfig(configString).match({
+  left: errors => console.error("Validation failed:", errors),
+  right: config => startServer(config)
 });
 ```
 
-### Ok and Err
+## Available Crates
 
-Create success and failure results:
+Fates provides specialized modules for common tasks. Each crate is independently importable for optimal tree-shaking:
 
-```typescript
-import { ok, err } from 'fates';
+- [Assert](./API.md#assert-module) - Type-safe assertions and runtime checks
+- [Cache](./API.md#cache-module) - Simple, flexible caching with TTL support
+- [Error](./API.md#error-module) - Enhanced error types with metadata
+- [Events](./API.md#events-module) - Type-safe event handling
+- [Fetch](./API.md#fetch-module) - HTTP client with Result returns
+- [FileSystem](./API.md#filesystem-module) - Safe filesystem operations
+- [Path](./API.md#path-module) - Path manipulation utilities
+- [Rate Limiter](./API.md#rate-limiter-module) - Request rate control
+- [React](./API.md#react-module) - React hooks and components
 
-const success = ok(42);
-const failure = err("Something went wrong");
-
-console.log(success.isOk());  // true
-console.log(failure.isErr()); // true
-```
-
-### Essential Methods
-
-Both `Ok` and `Err` provide powerful methods for working with results:
-
-#### match
-
-Pattern match on the result:
+Example using multiple crates:
 
 ```typescript
-result.match({
-  ok: (value) => console.log(`Success: ${value}`),
-  err: (error) => console.log(`Error: ${error}`),
+import { Http } from 'fates/fetch';
+import { RateLimiter } from 'fates/rate-limiter';
+import { assertDefined } from 'fates/assert';
+
+const api = new Http('https://api.example.com');
+const limiter = new RateLimiter({ 
+  interval: 1000,
+  maxRequests: 10 
 });
-```
 
-#### map and flatMap
-
-Transform success values:
-
-```typescript
-const doubled = ok(21).map(x => x * 2);  // Ok(42)
-const maybeSquared = doubled.flatMap(x => x > 50 ? err("Too large") : ok(x * x));  // Err("Too large")
-```
-
-#### mapErr
-
-Transform error values:
-
-```typescript
-const newError = err("error").mapErr(e => new Error(e));  // Err(Error("error"))
-```
-
-#### unwrap and unwrapOr
-
-Extract values (with caution):
-
-```typescript
-const value = ok(42).unwrap();  // 42
-const fallback = err("error").unwrapOr(0);  // 0
-```
-
-#### safeUnwrap
-
-Extract raw values regardless of error
-
-``` typescript
-const value ok(41).safeUnwrap(); // 41
-const fallback = err("error").safeUnwrap(); // "error"
-const badfallback = err("some error").unwrap(); // Throws "some error"
+async function fetchUser(id: string) {
+  assertDefined(id, "User ID must be defined");
+  
+  if (!limiter.tryAcquire()) {
+    return err(new Error("Rate limit exceeded"));
+  }
+  
+  return await api.get<User>(`/users/${id}`);
+}
 ```
 
 ## Advanced Usage
 
 ### Async Operations
 
-Fates seamlessly integrates with asynchronous code:
+Handle asynchronous operations elegantly:
 
 ```typescript
-import { fromPromise, AsyncResult } from 'fates';
+import { type AsyncResult, tryAsync } from 'fates';
 
-async function fetchUserData(id: number): AsyncResult<User, Error> {
-  return fromPromise(fetch(`https://api.example.com/users/${id}`).then(res => res.json()));
+async function processUserData(id: string): AsyncResult<ProcessedData> {
+  return tryAsync(async () => {
+    const user = await fetchUser(id);
+    const validated = await validateUser(user);
+    return await processData(validated);
+  });
 }
 
-const result = await fetchUserData(1);
-result.match({
-  ok: (user) => console.log(`Welcome, ${user.name}!`),
-  err: (error) => console.log(`Fetch failed: ${error.message}`),
-});
+// Chain async operations
+const result = await processUserData("123")
+  .then(result => result
+    .map(enrichData)
+    .mapErr(error => new ProcessingError(error)));
 ```
 
 ### Chaining and Composition
 
-Elegantly chain operations that might fail:
+Build complex operations from simple ones:
 
 ```typescript
-import { chain } from 'fates';
+const validateUser = (user: User): Result<User> =>
+  validateName(user)
+    .flatMap(validateAge)
+    .flatMap(validateEmail)
+    .map(enrichUserData);
 
-const getUser = (id: number): Result<User, Error> => { /* ... */ };
-const getUserPosts = (user: User): Result<Post[], Error> => { /* ... */ };
-const formatPosts = (posts: Post[]): Result<string, Error> => { /* ... */ };
-
-const formattedUserPosts = getUser(1)
-  .flatMap(chain(getUserPosts))
-  .flatMap(chain(formatPosts));
-
-formattedUserPosts.match({
-  ok: (formatted) => console.log(formatted),
-  err: (error) => console.error(`Error: ${error.message}`),
-});
+// Compose functions that return Results
+const processUser = chain(
+  validateUser,
+  updateDatabase,
+  notifyUser
+);
 ```
 
-### Error Recovery and Transformation
+### Error Recovery
 
-Gracefully handle and transform errors:
+Implement sophisticated error handling:
 
 ```typescript
-import { recover, mapError } from 'fates';
-
-const result = getUserData(1)
-  .mapErr(error => `Failed to fetch user: ${error.message}`)
-  .recover(error => ({ id: 0, name: 'Guest' }));
-
-console.log(result.unwrap());  // Either user data or the guest user
+const result = await fetchUser(id)
+  .then(result => result
+    .orElse(error => {
+      if (error instanceof NotFoundError) {
+        return fetchUserFromBackup(id);
+      }
+      return err(error);
+    })
+    .mapErr(error => {
+      logError(error);
+      return new UserFacingError("Could not fetch user");
+    }));
 ```
 
 ### Validation Pipelines
 
-Build complex, reusable validation logic:
+Create reusable validation chains:
 
 ```typescript
-import { validate, validateAll } from 'fates';
+import { Validation, valid, invalid } from 'fates/validation';
 
-const validateAge = (age: number) => validate(age, a => a >= 18, "Must be an adult");
-const validateEmail = (email: string) => validate(email, e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e), "Invalid email");
+const validateUsername = (input: string): Validation<string> => {
+  if (input.length < 3) return invalid("Too short");
+  if (input.length > 20) return invalid("Too long");
+  if (!/^[a-zA-Z0-9_]+$/.test(input)) return invalid("Invalid characters");
+  return valid(input);
+};
 
-const validateUser = (user: { age: number, email: string }) =>
-  validateAll(user, [
-    u => validateAge(u.age),
-    u => validateEmail(u.email)
-  ]);
-
-const result = validateUser({ age: 25, email: "alice@example.com" });
-result.match({
-  ok: (user) => console.log(`Valid user: ${JSON.stringify(user)}`),
-  err: (error) => console.error(`Validation failed: ${error}`),
-});
+const validateUser = (user: unknown): Validation<User> =>
+  validateUsername(user.username)
+    .flatMap(username => validateEmail(user.email)
+      .map(email => ({ username, email })));
 ```
 
-### Parsing and Type Conversion
+### Data Processing
 
-Safely parse and convert data:
-
-```typescript
-import { parseNumber, parseDate, parseJSON } from 'fates';
-
-const num = parseNumber("42").unwrapOr(0);
-const date = parseDate("2023-04-01").unwrapOr(new Date());
-const config = parseJSON<Config>(jsonString).unwrapOr(defaultConfig);
-```
-
-### Combining Results
-
-Work with multiple results simultaneously:
+Build robust data processing pipelines:
 
 ```typescript
-import { all, any, sequenceObject } from 'fates';
-
-const results = all([fetchUser(1), fetchPosts(1), fetchComments(1)]);
-results.match({
-  ok: ([user, posts, comments]) => console.log(`Fetched data for ${user.name}`),
-  err: (error) => console.error(`One or more fetches failed: ${error}`),
-});
-
-const firstSuccess = any([unreliableServiceA(), unreliableServiceB(), unreliableServiceC()]);
-firstSuccess.match({
-  ok: (result) => console.log(`Got a successful result: ${result}`),
-  err: (errors) => console.error(`All services failed: ${errors.join(', ')}`),
-});
-
-const userResult = sequenceObject({
-  name: validateName(formData.name),
-  email: validateEmail(formData.email),
-  age: validateAge(formData.age)
-});
-```
-
-### Processing Pipelines
-
-Create robust data processing flows:
-
-```typescript
-import { pipeline } from 'fates';
+import { pipeline } from 'fates/utils';
 
 const processOrder = pipeline(
   validateOrder,
-  calculateTotalWithTax,
-  applyDiscount,
+  enrichWithUserData,
+  calculateTotals,
+  applyDiscounts,
   saveToDatabase,
-  sendConfirmationEmail
+  notifyCustomer
 );
 
 const result = await processOrder(orderData);
-result.match({
-  ok: (confirmationId) => console.log(`Order processed, confirmation: ${confirmationId}`),
-  err: (error) => console.error(`Order processing failed: ${error}`),
-});
 ```
 
 ### Retry Mechanisms
 
-Handle transient failures in distributed systems:
+Handle transient failures:
 
 ```typescript
-import { retry } from 'fates';
+import { retry } from 'fates/utils';
 
 const fetchWithRetry = retry(
-  () => fetchFromUnreliableService(),
-  3,  // max attempts
-  1000  // delay between attempts (ms)
+  () => api.get('/unstable-endpoint'),
+  {
+    maxAttempts: 3,
+    delay: 1000,
+    backoff: 2
+  }
 );
 
 const result = await fetchWithRetry();
-result.match({
-  ok: (data) => console.log(`Fetched successfully: ${data}`),
-  err: (error) => console.error(`All attempts failed: ${error}`),
-});
 ```
 
-## API Reference
+### Combining Results
 
-For a complete API reference, please visit our [API Documentation](https://github.com/crazywolf132/fates/blob/main/API.md).
+Work with multiple Results:
 
-## Best Practices and Patterns
+```typescript
+import { all, any } from 'fates/utils';
 
-- Prefer `flatMap` over `map` when chaining operations that return `Result`.
-- Use `tap` for side effects without changing the `Result` value.
-- Leverage `validateAll` for complex object validations.
-- Use `AsyncResult` consistently for asynchronous operations.
-- Prefer `recover` over `unwrapOr` for more flexible error handling.
+// Wait for all operations to succeed
+const results = await all([
+  fetchUser(id),
+  fetchOrders(id),
+  fetchPreferences(id)
+]);
+
+// Use first successful result
+const backup = await any([
+  primaryDB.fetch(id),
+  secondaryDB.fetch(id),
+  tertiaryDB.fetch(id)
+]);
+```
+
+## Best Practices
+
+### Do's ✅
+
+```typescript
+// Use pattern matching for exhaustive handling
+result.match({
+  ok: value => handleSuccess(value),
+  err: error => handleError(error)
+});
+
+// Chain operations safely
+option
+  .map(transform)
+  .flatMap(validate);
+
+// Handle errors explicitly
+result.mapErr(error => new ApplicationError(error));
+
+// Use type guards
+if (result.isOk()) {
+  // TypeScript knows result is Ok<T>
+}
+```
+
+### Don'ts ❌
+
+```typescript
+// Don't access .value directly
+result.value // ❌ Never do this!
+
+// Don't use unwrap without protection
+result.unwrap() // ❌ Could throw!
+
+// Don't ignore error cases
+result.map(value => transform(value)) // ❌ Error case ignored
+
+// Don't mix with null/undefined
+function findUser(): User | null // ❌ Use Option<User>
+```
 
 ## Performance Considerations
 
-Fates is designed with performance in mind, but here are some tips to optimize your use:
+- Results and Options are lightweight wrappers with minimal overhead
+- Method chaining creates new instances; batch operations when possible
+- Use `match` for pattern matching - it's optimized and type-safe
+- Async operations leverage native Promises for optimal performance
+- Tree-shaking friendly - only pay for what you use
+- Crates are independently importable for minimal bundle size
 
-- Avoid unnecessary `map` and `flatMap` chains when a single operation would suffice.
-- Use `AsyncResult` directly instead of wrapping `Promise<Result<T, E>>`.
-- Leverage `all` and `any` for parallel operations instead of sequential `flatMap` chains.
+## Migration Guide
 
-## Migrating from Try-Catch
+### From try-catch
 
-Fates offers a more expressive and type-safe alternative to traditional try-catch blocks. Here's a quick comparison:
+Before:
 
 ```typescript
-// Traditional try-catch
 try {
-  const result = riskyOperation();
-  console.log(result);
+  const user = await fetchUser(id);
+  const validated = validateUser(user);
+  return processUser(validated);
 } catch (error) {
-  console.error(error);
+  handleError(error);
+  return defaultUser;
 }
-
-// With Fates
-riskyOperation()
-  .match({
-    ok: (result) => console.log(result),
-    err: (error) => console.error(error),
-  });
 ```
 
-## Comparison with Other Libraries
+After:
 
-Fates draws inspiration from functional programming concepts and libraries like Rust's `Result` type. However, it's tailored specifically for TypeScript, offering seamless integration with async/await and providing a rich set of utilities designed for real-world TypeScript applications.
+```typescript
+const result = await fetchUser(id)
+  .then(result => result
+    .flatMap(validateUser)
+    .flatMap(processUser)
+    .unwrapOr(defaultUser));
+```
 
-## Contributing
+### From Nullable Values
 
-We welcome contributions to Fates! Whether you're fixing bugs, adding features, or improving documentation, your help is appreciated. Please check our [Contribution Guidelines](https://github.com/crazywolf132/fates/blob/main/CONTRIBUTING.md) for more information.
+Before:
+
+```typescript
+function findUser(id: string): User | null {
+  const user = users.get(id);
+  return user ?? null;
+}
+```
+
+After:
+
+```typescript
+function findUser(id: string): Option<User> {
+  const user = users.get(id);
+  return user ? some(user) : none();
+}
+```
+
+## Library Comparison
+
+- **fp-ts**: Complete FP toolkit, steeper learning curve
+- **neverthrow**: Similar approach, fewer features
+- **ts-results**: Basic Result type only
+- **Option-T**: Focused on Option type
+- **Fates**:
+  - Comprehensive but approachable
+  - Rich utility functions
+  - Strong TypeScript integration
+  - Modular architecture
+  - First-class async support
+  - React integration
+  - Wide range of utility crates
+
+## API Reference
+
+For detailed API documentation, see [API.md](./API.md).
 
 ## License
 
-Fates is licensed under the ISC License. See the [LICENSE](https://github.com/crazywolf132/fates/blob/main/LICENSE) file for details.
+ISC License - see [LICENSE](LICENSE) for details.
 
 ---
 
-Embrace the power of Fates and elevate your TypeScript projects to new heights of reliability and expressiveness!
+Ready to tame uncertainty in your TypeScript projects? Get started with Fates today!
+
+```bash
+npm install fates
+```
