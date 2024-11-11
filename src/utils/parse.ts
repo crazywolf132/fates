@@ -1,4 +1,4 @@
-import { type Result, ok, err } from '../result/result';
+import { type Result, ok, err } from '../result';
 
 export const parseNumber = (value: string): Result<number, string> => {
   const num = Number(value);

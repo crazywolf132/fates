@@ -1,4 +1,5 @@
 import type { Result, AsyncResult } from "../result";
+import { ok } from "../result";
 
 /**
  * Combines multiple Results or AsyncResults into a single AsyncResult.

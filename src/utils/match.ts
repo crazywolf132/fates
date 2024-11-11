@@ -1,4 +1,4 @@
-export function match<T, R>(
+export function match<T extends object, R>(
   value: T,
   patterns: { [K in keyof T]?: (value: T[K]) => R },
   defaultCase: () => R
