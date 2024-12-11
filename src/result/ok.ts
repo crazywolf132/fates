@@ -6,6 +6,7 @@ import { type Result } from './result';
  * Ok<T, E> is the variant of Result that contains a success value.
  */
 export class Ok<T, E> implements Result<T, E> {
+  readonly _tag = 'ok' as const;
   constructor(private readonly value: T) { }
 
   isOk(): this is Ok<T, E> {
@@ -21,7 +22,7 @@ export class Ok<T, E> implements Result<T, E> {
   }
 
   mapErr<F>(_fn: (error: E) => F): Result<T, F> {
-    return this as unknown as Result<T, F>;
+    return new Ok(this.value) as Result<T, F>;
   }
 
   unwrapOr(_defaultValue: T): T {
@@ -32,7 +33,7 @@ export class Ok<T, E> implements Result<T, E> {
     return this.value;
   }
 
-  safeUnwrap(): T {
+  safeUnwrap(): T | E{
     return this.value;
   }
 
@@ -53,7 +54,7 @@ export class Ok<T, E> implements Result<T, E> {
   }
 
   orElse<F>(_fn: (error: E) => Result<T, F>): Result<T, F> {
-    return this as unknown as Result<T, F>;
+    return new Ok(this.value) as Result<T, F>;
   }
 
   unwrapOrElse(_fn: (error: E) => T): T {

@@ -6,7 +6,9 @@ import { type Result } from './result';
  * Err<T, E> is the variant of Result that contains an error value.
  */
 export class Err<T, E> implements Result<T, E> {
-  constructor(private readonly value: E) { }
+  readonly _tag: 'err' = 'err';
+  
+  constructor(private readonly value: E) {}
 
   isOk(): this is Ok<T, E> {
     return false;
@@ -17,11 +19,11 @@ export class Err<T, E> implements Result<T, E> {
   }
 
   map<U>(_fn: (value: T) => U): Result<U, E> {
-    return this as unknown as Result<U, E>;
+    return new Err<U, E>(this.value);
   }
 
   mapErr<F>(fn: (error: E) => F): Result<T, F> {
-    return new Err(fn(this.value));
+    return new Err<T, F>(fn(this.value)) as Result<T, F>;
   }
 
   unwrapOr(defaultValue: T): T {
@@ -29,10 +31,10 @@ export class Err<T, E> implements Result<T, E> {
   }
 
   unwrap(): T {
-    throw new Error(`Called unwrap on an Err value: ${this.value}`);
+    throw this.value;
   }
 
-  safeUnwrap(): E {
+  safeUnwrap(): T | E {
     return this.value;
   }
 
@@ -41,7 +43,7 @@ export class Err<T, E> implements Result<T, E> {
   }
 
   and<U>(_resb: Result<U, E>): Result<U, E> {
-    return this as unknown as Result<U, E>;
+    return new Err<U, E>(this.value);
   }
 
   or(resb: Result<T, E>): Result<T, E> {
@@ -49,7 +51,7 @@ export class Err<T, E> implements Result<T, E> {
   }
 
   andThen<U>(_fn: (value: T) => Result<U, E>): Result<U, E> {
-    return this as unknown as Result<U, E>;
+    return new Err<U, E>(this.value)
   }
 
   orElse<F>(fn: (error: E) => Result<T, F>): Result<T, F> {
@@ -60,12 +62,12 @@ export class Err<T, E> implements Result<T, E> {
     return fn(this.value);
   }
 
-  transpose<U>(): Option<Result<U, E>> {
-    return some(this as unknown as Result<U, E>);
+  transpose<U>(this: Err<Option<U>, E>): Option<Result<U, E>> {
+    return some(new Err<U, E>(this.value));
   }
 
   zip<U>(_other: Result<U, E>): Result<[T, U], E> {
-    return this as unknown as Result<[T, U], E>;
+    return new Err<[T, U], E>(this.value);
   }
 }
 
@@ -74,6 +76,11 @@ export class Err<T, E> implements Result<T, E> {
  * @param error - The error to wrap in an Err.
  */
 export function err<T, E>(error: E): Result<T, E> {
-  return new Err(error);
+  return new Err(error) as Result<T, E>;
 }
-export const isErr = <T, E>(result: Result<T, E>): result is Err<T, E> => result.isErr();
+
+/**
+ * Type guard for Err
+ */
+export const isErr = <T, E>(result: Result<T, E>): result is Err<T, E> => 
+  result._tag === 'err';

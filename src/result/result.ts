@@ -6,6 +6,7 @@ import type { Option } from '../option';
  * It is an enum with the variants Ok(T) and Err(E).
  */
 export interface Result<T, E = Error> {
+  _tag: 'ok' | 'err';
   /**
    * Returns true if the result is Ok.
    */
@@ -36,7 +37,8 @@ export interface Result<T, E = Error> {
 
   /**
    * Unwraps the result, yielding the content of an Ok.
-   * Throws if the value is an Err.
+   * If the result is Err, throws the error.
+   * Note: The return type changes based on whether this is Ok or Err
    */
   unwrap(): T;
 
